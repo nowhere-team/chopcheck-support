@@ -2,7 +2,7 @@ from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.fsm.context import FSMContext
-from aiogram.types import TelegramObject, User
+from aiogram.types import TelegramObject
 
 from app.bot.manager import Manager
 
@@ -18,19 +18,8 @@ class ManagerMiddleware(BaseMiddleware):
             event: TelegramObject,
             data: Dict[str, Any],
     ) -> Any:
-        """
-        Call the middleware.
-
-        :param handler: The handler function.
-        :param event: The Telegram event.
-        :param data: Additional data.
-        :return: The result of the handler function.
-        """
-        # Extract the user, state, and state data from data
-        user: User = data.get("event_from_user")
         state: FSMContext = data.get("state")
         state_data = await state.get_data()
-
         config = data["config"].bot
 
         if not config.LANGUAGE_PROMPT_ENABLED:

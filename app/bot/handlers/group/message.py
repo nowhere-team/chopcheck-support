@@ -26,7 +26,7 @@ router.message.filter(
 
 
 @router.message(F.forum_topic_created)
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_forum_topic_created(message: Message, manager: Manager, redis: RedisStorage) -> None:
     await asyncio.sleep(3)
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
     if not user_data: return None  # noqa
@@ -50,7 +50,7 @@ async def handler(message: Message, manager: Manager, redis: RedisStorage) -> No
 
 
 @router.message(F.pinned_message | F.forum_topic_edited | F.forum_topic_closed | F.forum_topic_reopened)
-async def handler(message: Message) -> None:
+async def handle_service_message(message: Message) -> None:
     """
     Delete service messages such as pinned, edited, closed, or reopened forum topics.
 
@@ -62,23 +62,13 @@ async def handler(message: Message) -> None:
 
 @router.message(F.media_group_id, F.from_user[F.is_bot.is_(False)])
 @router.message(F.media_group_id.is_(None), F.from_user[F.is_bot.is_(False)])
-async def handler(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, album: Optional[Album] = None) -> None:
-    """
-    Handles user messages and sends them to the respective user.
-    If silent mode is enabled for the user, the messages are ignored.
-
-    :param message: Message object.
-    :param manager: Manager object.
-    :param redis: RedisStorage object.
-    :param album: Album object or None.
-    :return: None
-    """
+async def handle_operator_message(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, album: Optional[Album] = None) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
     if not user_data: return None  # noqa
 
     if user_data.message_silent_mode:
         # If silent mode is enabled, ignore all messages.
-        return
+        return None
 
     text = manager.text_message.get("message_sent_to_user")
 

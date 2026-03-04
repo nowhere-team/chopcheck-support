@@ -8,7 +8,6 @@ from aiogram.utils.markdown import hbold, hlink
 
 from app.bot.manager import Manager
 from app.bot.utils.redis import RedisStorage
-from app.bot.utils.redis.models import UserData
 
 
 router = Router(name="admin_commands")

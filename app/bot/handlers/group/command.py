@@ -31,7 +31,8 @@ router_id.message.filter(
 
 
 @router_id.message(Command("id"))
-async def handler(message: Message) -> None:
+async def handle_id(message: Message) -> None:
+    await message.reply(hcode(message.chat.id))
     """
     Sends chat ID in response to the /id command.
 
@@ -124,7 +125,9 @@ qr_router.callback_query.filter(
 
 
 @router.message(Command("silent"))
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_silent(message: Message, manager: Manager, redis: RedisStorage) -> None:
+    user_data = await redis.get_by_message_thread_id(message.message_thread_id)
+    if not user_data: return None  # noqa
     """
     Toggles silent mode for a user in the group.
     If silent mode is disabled, it will be enabled, and vice versa.
@@ -167,7 +170,9 @@ async def handler(message: Message, manager: Manager, redis: RedisStorage) -> No
 
 
 @router.message(Command("information"))
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_information(message: Message, manager: Manager, redis: RedisStorage) -> None:
+    user_data = await redis.get_by_message_thread_id(message.message_thread_id)
+    if not user_data: return None  # noqa
     """
     Sends user information in response to the /information command.
 
@@ -196,7 +201,7 @@ async def handler(message: Message, manager: Manager, redis: RedisStorage) -> No
 
 
 @router.message(Command("del"))
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_del(message: Message, manager: Manager, redis: RedisStorage) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
     if not user_data:
         return
@@ -319,31 +324,21 @@ async def _update_panel_main_message(message: Message, manager: Manager, user_da
             raise
 
 @router.message(Command("resolve"))
-async def handler(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, settings: SettingsStorage) -> None:
+async def handle_resolve(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, settings: SettingsStorage) -> None:
     await _resolve_ticket(
-        message,
-        manager,
-        redis,
-        apscheduler,
-        settings,
-        notify_user=True,
+        message, manager, redis, apscheduler, settings, notify_user=True,
     )
 
 
 @router.message(Command("resolvequiet"))
-async def handler(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, settings: SettingsStorage) -> None:
+async def handle_resolvequiet(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, settings: SettingsStorage) -> None:
     await _resolve_ticket(
-        message,
-        manager,
-        redis,
-        apscheduler,
-        settings,
-        notify_user=False,
+        message, manager, redis, apscheduler, settings, notify_user=False,
     )
 
 
 @router.message(Command("menu"))
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_menu(message: Message, manager: Manager, redis: RedisStorage) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
     if not user_data:
         return
@@ -360,7 +355,8 @@ async def handler(message: Message, manager: Manager, redis: RedisStorage) -> No
 
 
 @router.message(Command(commands=["ban"]))
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_ban(message: Message, manager: Manager, redis: RedisStorage) -> None:
+    user_data = await redis.get_by_message_thread_id(message.message_thread_id)
     """
     Toggles the ban status for a user in the group.
     If the user is banned, they will be unbanned, and vice versa.
