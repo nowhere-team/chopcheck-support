@@ -78,7 +78,9 @@ INVITE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 GENERIC_TME_PATTERN = re.compile(r"\bt\.me/", re.IGNORECASE)
 URL_PATTERN = re.compile(r"(?:https?://|www\.)", re.IGNORECASE)
 OBF_TME_PATTERN = re.compile(r"\bt[\\s._\\-\\/|]*me\\b", re.IGNORECASE)
-OBF_TELEGRAM_PATTERN = re.compile(r"te" + SEPARATOR_RE + r"le" + SEPARATOR_RE + r"gram", re.IGNORECASE)
+OBF_TELEGRAM_PATTERN = re.compile(
+    r"te" + SEPARATOR_RE + r"le" + SEPARATOR_RE + r"gram", re.IGNORECASE
+)
 
 SERVICE_KEYWORDS = (
     "telegram",
@@ -193,8 +195,15 @@ def analyze_user_message(
 
         # Проверяем только t.me и связанные паттерны, остальные URL разрешены
         _check_patterns(normalized, INVITE_PATTERNS, bucket=high, source=source)
-        _append_if(bool(OBF_TME_PATTERN.search(normalized)), "обфускация t.me", high, source)
-        _append_if(bool(OBF_TELEGRAM_PATTERN.search(normalized)), "обфускация telegram", high, source)
+        _append_if(
+            bool(OBF_TME_PATTERN.search(normalized)), "обфускация t.me", high, source
+        )
+        _append_if(
+            bool(OBF_TELEGRAM_PATTERN.search(normalized)),
+            "обфускация telegram",
+            high,
+            source,
+        )
 
         if GENERIC_TME_PATTERN.search(normalized):
             high.append(f"{source}: ссылка на t.me")
@@ -203,11 +212,19 @@ def analyze_user_message(
             pass
 
         if source in {"username", "full_name"}:
-            _check_keywords(collapsed, SERVICE_KEYWORDS, bucket=high, source=source, severity="high")
+            _check_keywords(
+                collapsed, SERVICE_KEYWORDS, bucket=high, source=source, severity="high"
+            )
             if source == "full_name" and "@" in value:
                 medium.append(f"{source}: символ @ в имени")
         else:
-            _check_keywords(collapsed, SERVICE_KEYWORDS, bucket=medium, source=source, severity="medium")
+            _check_keywords(
+                collapsed,
+                SERVICE_KEYWORDS,
+                bucket=medium,
+                source=source,
+                severity="medium",
+            )
 
     if full_name:
         process_field(full_name, "full_name")
@@ -224,7 +241,9 @@ def analyze_user_message(
     return SuspicionResult(high=high, medium=medium)
 
 
-def sanitize_display_name(value: str | None, *, placeholder: str = SENSITIVE_PLACEHOLDER) -> str:
+def sanitize_display_name(
+    value: str | None, *, placeholder: str = SENSITIVE_PLACEHOLDER
+) -> str:
     if not value:
         return placeholder
 

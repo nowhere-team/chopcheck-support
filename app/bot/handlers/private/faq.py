@@ -39,7 +39,9 @@ async def _send_faq_item(manager: Manager, item: FAQItem) -> None:
     builder.button(text="🏠 Главное меню", callback_data="faq:back")
     builder.adjust(1)
 
-    message_text = item.text or "Материалы по выбранному вопросу находятся во вложениях ниже."
+    message_text = (
+        item.text or "Материалы по выбранному вопросу находятся во вложениях ниже."
+    )
 
     await manager.send_message(
         message_text,
@@ -114,31 +116,49 @@ def _collect_attachments(message: Message) -> tuple[str | None, list[FAQAttachme
     if message.photo:
         file_id = message.photo[-1].file_id
         attachments.append(
-            FAQAttachment(type="photo", file_id=file_id, caption=message.caption or None)
+            FAQAttachment(
+                type="photo", file_id=file_id, caption=message.caption or None
+            )
         )
         if message.caption:
             text = None
     elif message.video:
         attachments.append(
-            FAQAttachment(type="video", file_id=message.video.file_id, caption=message.caption or None)
+            FAQAttachment(
+                type="video",
+                file_id=message.video.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.document:
         attachments.append(
-            FAQAttachment(type="document", file_id=message.document.file_id, caption=message.caption or None)
+            FAQAttachment(
+                type="document",
+                file_id=message.document.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.animation:
         attachments.append(
-            FAQAttachment(type="animation", file_id=message.animation.file_id, caption=message.caption or None)
+            FAQAttachment(
+                type="animation",
+                file_id=message.animation.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.audio:
         attachments.append(
-            FAQAttachment(type="audio", file_id=message.audio.file_id, caption=message.caption or None)
+            FAQAttachment(
+                type="audio",
+                file_id=message.audio.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
@@ -148,23 +168,31 @@ def _collect_attachments(message: Message) -> tuple[str | None, list[FAQAttachme
         )
     elif message.video_note:
         attachments.append(
-            FAQAttachment(type="video_note", file_id=message.video_note.file_id, caption=None)
+            FAQAttachment(
+                type="video_note", file_id=message.video_note.file_id, caption=None
+            )
         )
 
     return text, attachments
 
 
-def _render_admin_faq_overview(items: Iterable[FAQItem]) -> tuple[str, InlineKeyboardBuilder]:
+def _render_admin_faq_overview(
+    items: Iterable[FAQItem],
+) -> tuple[str, InlineKeyboardBuilder]:
     """Compose admin overview message and markup."""
     items = list(items)
     builder = InlineKeyboardBuilder()
     lines = ["<b>Часто задаваемые вопросы</b>"]
     if not items:
-        lines.append("Список пуст. Добавьте новый вопрос, чтобы показать его пользователям.")
+        lines.append(
+            "Список пуст. Добавьте новый вопрос, чтобы показать его пользователям."
+        )
     else:
         lines.append("Выберите элемент для редактирования или добавьте новый вопрос.")
         for idx, item in enumerate(items, start=1):
-            builder.button(text=f"{idx}. {item.title}", callback_data=f"faq:manage:{item.id}")
+            builder.button(
+                text=f"{idx}. {item.title}", callback_data=f"faq:manage:{item.id}"
+            )
             lines.append(f"{idx}. {hbold(html.escape(item.title))}")
     builder.button(text="➕ Добавить вопрос", callback_data="faq:add")
     builder.button(text="⬅️ Назад", callback_data="admin:menu")
@@ -177,7 +205,9 @@ async def _show_admin_faq_overview(manager: Manager, faq: FAQStorage) -> None:
     items = await faq.list_items()
     text, builder = _render_admin_faq_overview(items)
     await manager.state.set_state(None)
-    await manager.send_message(text, reply_markup=builder.as_markup(), replace_previous=False)
+    await manager.send_message(
+        text, reply_markup=builder.as_markup(), replace_previous=False
+    )
 
 
 async def _show_admin_item_menu(manager: Manager, item: FAQItem) -> None:
@@ -202,7 +232,11 @@ async def _show_admin_item_menu(manager: Manager, item: FAQItem) -> None:
         preview_lines.append("")
         preview_lines.append(f"Вложения: {len(item.attachments)}")
 
-    await manager.send_message("\n".join(preview_lines), reply_markup=builder.as_markup(), replace_previous=False)
+    await manager.send_message(
+        "\n".join(preview_lines),
+        reply_markup=builder.as_markup(),
+        replace_previous=False,
+    )
 
 
 # -------------------------- User handlers -----------------------------------
@@ -236,7 +270,9 @@ async def show_faq_item(call: CallbackQuery, manager: Manager, faq: FAQStorage) 
 
 
 @router.message(Command("faq"), MagicData(F.event_from_user.id == F.config.bot.DEV_ID))  # type: ignore[attr-defined]
-async def admin_command_faq(message: Message, manager: Manager, faq: FAQStorage) -> None:
+async def admin_command_faq(
+    message: Message, manager: Manager, faq: FAQStorage
+) -> None:
     await _show_admin_faq_overview(manager, faq)
     await manager.delete_message(message)
 
@@ -245,7 +281,9 @@ async def admin_command_faq(message: Message, manager: Manager, faq: FAQStorage)
     F.data == "admin:faq",
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_open_faq(call: CallbackQuery, manager: Manager, faq: FAQStorage) -> None:
+async def admin_open_faq(
+    call: CallbackQuery, manager: Manager, faq: FAQStorage
+) -> None:
     await _show_admin_faq_overview(manager, faq)
     await call.answer()
 
@@ -257,7 +295,9 @@ async def admin_open_faq(call: CallbackQuery, manager: Manager, faq: FAQStorage)
 async def admin_add_faq(call: CallbackQuery, manager: Manager) -> None:
     await manager.state.set_state(FAQStates.waiting_title)
     await manager.state.update_data(faq_item_id=None)
-    await manager.send_message("Введите заголовок для новой кнопки FAQ.", replace_previous=False)
+    await manager.send_message(
+        "Введите заголовок для новой кнопки FAQ.", replace_previous=False
+    )
     await call.answer()
 
 
@@ -271,30 +311,37 @@ async def admin_receive_title(message: Message, manager: Manager) -> None:
     await manager.state.update_data(faq_title=title)
     await manager.state.set_state(FAQStates.waiting_content)
     await manager.send_message(
-        "Отправьте ответ одним сообщением. Можно приложить фото, видео или документ с подписью."
-        ,
-        replace_previous=False
+        "Отправьте ответ одним сообщением. Можно приложить фото, видео или документ с подписью.",
+        replace_previous=False,
     )
     await manager.delete_message(message)
 
 
 @router.message(StateFilter(FAQStates.waiting_content))
-async def admin_receive_content(message: Message, manager: Manager, faq: FAQStorage) -> None:
+async def admin_receive_content(
+    message: Message, manager: Manager, faq: FAQStorage
+) -> None:
     try:
         text, attachments = _collect_attachments(message)
     except ValueError:
-        await message.answer("Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением.")
+        await message.answer(
+            "Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением."
+        )
         return
 
     if text is None and not attachments:
-        await message.answer("Ответ должен содержать текст или вложение. Попробуйте ещё раз.")
+        await message.answer(
+            "Ответ должен содержать текст или вложение. Попробуйте ещё раз."
+        )
         return
 
     state = await manager.state.get_data()
     title = state.get("faq_title")
     if not title:
         await manager.state.set_state(None)
-        await message.answer("Не удалось определить заголовок. Начните добавление заново.")
+        await message.answer(
+            "Не удалось определить заголовок. Начните добавление заново."
+        )
         return
 
     await faq.add_item(title=title, text=text, attachments=attachments)
@@ -308,7 +355,9 @@ async def admin_receive_content(message: Message, manager: Manager, faq: FAQStor
     F.data.startswith("faq:manage:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_manage_item(call: CallbackQuery, manager: Manager, faq: FAQStorage) -> None:
+async def admin_manage_item(
+    call: CallbackQuery, manager: Manager, faq: FAQStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     item = await faq.get_item(item_id)
     if item is None:
@@ -324,7 +373,9 @@ async def admin_manage_item(call: CallbackQuery, manager: Manager, faq: FAQStora
     F.data.startswith("faq:rename:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_start_rename(call: CallbackQuery, manager: Manager, faq: FAQStorage) -> None:
+async def admin_start_rename(
+    call: CallbackQuery, manager: Manager, faq: FAQStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     item = await faq.get_item(item_id)
     if item is None:
@@ -341,7 +392,9 @@ async def admin_start_rename(call: CallbackQuery, manager: Manager, faq: FAQStor
 
 
 @router.message(StateFilter(FAQStates.editing_title))
-async def admin_rename_item(message: Message, manager: Manager, faq: FAQStorage) -> None:
+async def admin_rename_item(
+    message: Message, manager: Manager, faq: FAQStorage
+) -> None:
     new_title = (message.text or "").strip()
     if not new_title:
         await message.answer("Заголовок не может быть пустым. Попробуйте снова.")
@@ -376,7 +429,9 @@ async def admin_rename_item(message: Message, manager: Manager, faq: FAQStorage)
     F.data.startswith("faq:content:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_start_update_content(call: CallbackQuery, manager: Manager, faq: FAQStorage) -> None:
+async def admin_start_update_content(
+    call: CallbackQuery, manager: Manager, faq: FAQStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     item = await faq.get_item(item_id)
     if item is None:
@@ -386,23 +441,28 @@ async def admin_start_update_content(call: CallbackQuery, manager: Manager, faq:
     await manager.state.set_state(FAQStates.editing_content)
     await manager.state.update_data(faq_item_id=item_id)
     await manager.send_message(
-        "Отправьте новое содержимое ответа одним сообщением. Можно приложить медиафайл."
-        ,
-        replace_previous=False
+        "Отправьте новое содержимое ответа одним сообщением. Можно приложить медиафайл.",
+        replace_previous=False,
     )
     await call.answer()
 
 
 @router.message(StateFilter(FAQStates.editing_content))
-async def admin_update_content(message: Message, manager: Manager, faq: FAQStorage) -> None:
+async def admin_update_content(
+    message: Message, manager: Manager, faq: FAQStorage
+) -> None:
     try:
         text, attachments = _collect_attachments(message)
     except ValueError:
-        await message.answer("Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением.")
+        await message.answer(
+            "Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением."
+        )
         return
 
     if text is None and not attachments:
-        await message.answer("Ответ должен содержать текст или вложение. Попробуйте ещё раз.")
+        await message.answer(
+            "Ответ должен содержать текст или вложение. Попробуйте ещё раз."
+        )
         return
 
     state = await manager.state.get_data()
@@ -427,7 +487,9 @@ async def admin_update_content(message: Message, manager: Manager, faq: FAQStora
     F.data == "faq:admin_back",
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_back_to_list(call: CallbackQuery, manager: Manager, faq: FAQStorage) -> None:
+async def admin_back_to_list(
+    call: CallbackQuery, manager: Manager, faq: FAQStorage
+) -> None:
     await _show_admin_faq_overview(manager, faq)
     await call.answer()
 
@@ -436,7 +498,9 @@ async def admin_back_to_list(call: CallbackQuery, manager: Manager, faq: FAQStor
     F.data.startswith("faq:delete:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_delete_item(call: CallbackQuery, manager: Manager, faq: FAQStorage) -> None:
+async def admin_delete_item(
+    call: CallbackQuery, manager: Manager, faq: FAQStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     await faq.delete_item(item_id)
     await manager.state.set_state(None)

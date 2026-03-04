@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS fsm (
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass(slots=True)
 class SQLiteDatabase:
     path: Path | str
@@ -147,7 +148,9 @@ class SQLiteDatabase:
                     gid(),
                 )
         except OSError as exc:
-            logger.warning("Failed to stat SQLite DB file owner for %s: %s", self.path, exc)
+            logger.warning(
+                "Failed to stat SQLite DB file owner for %s: %s", self.path, exc
+            )
 
     async def close(self) -> None:
         if self._conn is not None:
@@ -161,7 +164,9 @@ class SQLiteDatabase:
         return self._conn
 
     async def get_meta(self, key: str) -> str | None:
-        async with self.conn.execute("SELECT value FROM meta WHERE key = ?", (key,)) as cursor:
+        async with self.conn.execute(
+            "SELECT value FROM meta WHERE key = ?", (key,)
+        ) as cursor:
             row = await cursor.fetchone()
         if row is None:
             return None

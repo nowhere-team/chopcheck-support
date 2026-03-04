@@ -63,7 +63,9 @@ class MigrationManager:
     async def run_pending(self) -> None:
         current_version = await self._get_current_version()
         pending = [
-            migration for migration in self._get_migrations() if migration.version > current_version
+            migration
+            for migration in self._get_migrations()
+            if migration.version > current_version
         ]
         if not pending:
             logger.info("No migrations required (current version=%s).", current_version)
@@ -77,7 +79,9 @@ class MigrationManager:
         )
 
         for migration in sorted(pending, key=lambda m: m.version):
-            logger.info("Starting migration %s: %s", migration.version, migration.description)
+            logger.info(
+                "Starting migration %s: %s", migration.version, migration.description
+            )
             await migration.callback(context)
             await self._set_current_version(migration.version)
             logger.info("Migration %s completed.", migration.version)

@@ -16,10 +16,10 @@ class AlbumMiddleware(BaseMiddleware):
     """
 
     def __init__(
-            self,
-            album_key: str = "album",
-            latency: float = 0.2,
-            ttl: float = 0.3,
+        self,
+        album_key: str = "album",
+        latency: float = 0.2,
+        ttl: float = 0.3,
     ) -> None:
         """
         Initialize the AlbumMiddleware.
@@ -30,7 +30,9 @@ class AlbumMiddleware(BaseMiddleware):
         """
         self.album_key = album_key
         self.latency = latency
-        self.cache: MutableMapping[str, Dict[str, Any]] = TTLCache(maxsize=10_000, ttl=ttl)
+        self.cache: MutableMapping[str, Dict[str, Any]] = TTLCache(
+            maxsize=10_000, ttl=ttl
+        )
 
     @staticmethod
     def get_content(message: Message) -> Optional[Tuple[Media, str]]:
@@ -51,10 +53,10 @@ class AlbumMiddleware(BaseMiddleware):
         return None
 
     async def __call__(
-            self,
-            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-            event: TelegramObject,
-            data: Dict[str, Any],
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
     ) -> Any:
         """
         Call the middleware.

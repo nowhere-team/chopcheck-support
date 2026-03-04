@@ -12,7 +12,9 @@ class Text(metaclass=ABCMeta):
     """Abstract base class for handling text data in different languages."""
 
     def __init__(self, language_code: str) -> None:
-        self.language_code = language_code if language_code in SUPPORTED_LANGUAGES else "en"
+        self.language_code = (
+            language_code if language_code in SUPPORTED_LANGUAGES else "en"
+        )
 
     @property
     @abstractmethod
@@ -44,7 +46,7 @@ class TextMessage(Text):
                 ),
                 "source": (
                     "Source code available at "
-                    "<a href=\"https://github.com/mrtesla07/support-bot\">GitHub</a>"
+                    '<a href="https://github.com/mrtesla07/support-bot">GitHub</a>'
                 ),
                 "user_started_bot": (
                     f"User {hbold('{name}')} started the bot!\n\n"
@@ -95,9 +97,7 @@ class TextMessage(Text):
                     "Please rename your profile and remove invite links before trying again."
                 ),
                 "auto_blocked_alert": (
-                    "<b>Automatic block triggered.</b>\n"
-                    "{user}\n"
-                    "Reason: {reason}"
+                    "<b>Automatic block triggered.</b>\n{user}\nReason: {reason}"
                 ),
                 "silent_mode_enabled": (
                     "<b>Silent mode enabled!</b> Messages will not be forwarded to the user."
@@ -129,7 +129,7 @@ class TextMessage(Text):
                 ),
                 "source": (
                     "Исходный код доступен на "
-                    "<a href=\"https://github.com/mrtesla07/support-bot\">GitHub</a>"
+                    '<a href="https://github.com/mrtesla07/support-bot">GitHub</a>'
                 ),
                 "user_started_bot": (
                     f"Пользователь {hbold('{name}')} запустил бота!\n\n"
@@ -180,9 +180,7 @@ class TextMessage(Text):
                     "Уберите ссылки и сервисные маски и попробуйте снова."
                 ),
                 "auto_blocked_alert": (
-                    "<b>Включена авто-блокировка.</b>\n"
-                    "{user}\n"
-                    "Причина: {reason}"
+                    "<b>Включена авто-блокировка.</b>\n{user}\nПричина: {reason}"
                 ),
                 "silent_mode_enabled": (
                     "<b>Тихий режим включён!</b> Сообщения не будут пересылаться пользователю."

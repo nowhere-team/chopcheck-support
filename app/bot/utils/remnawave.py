@@ -39,7 +39,7 @@ def _bytes_to_gb(value: float | int | None) -> str:
     if value is None:
         return "—"
     try:
-        return f"{value / (1024 ** 3):.2f} GB"
+        return f"{value / (1024**3):.2f} GB"
     except Exception:
         return "—"
 
@@ -78,7 +78,9 @@ def is_configured(config: RemnawaveConfig) -> bool:
     return bool(config.API_BASE and config.API_TOKEN)
 
 
-async def fetch_user_info(config: RemnawaveConfig, telegram_id: int) -> RemnawaveInfo | None:
+async def fetch_user_info(
+    config: RemnawaveConfig, telegram_id: int
+) -> RemnawaveInfo | None:
     if not is_configured(config):
         return None
 
@@ -100,7 +102,9 @@ async def fetch_user_info(config: RemnawaveConfig, telegram_id: int) -> Remnawav
         if user_id is None:
             user_id = getattr(user, "user_id", None)
         if user_id is None:
-            extra = getattr(user, "__pydantic_extra__", None) or getattr(user, "model_extra", None)
+            extra = getattr(user, "__pydantic_extra__", None) or getattr(
+                user, "model_extra", None
+            )
             if isinstance(extra, dict):
                 user_id = extra.get("id") or extra.get("userId")
 
@@ -108,18 +112,30 @@ async def fetch_user_info(config: RemnawaveConfig, telegram_id: int) -> Remnawav
         last_connected_at = user.user_traffic.online_at
         if user.user_traffic.last_connected_node_uuid:
             try:
-                node = await sdk.nodes.get_one_node(str(user.user_traffic.last_connected_node_uuid))
+                node = await sdk.nodes.get_one_node(
+                    str(user.user_traffic.last_connected_node_uuid)
+                )
                 last_node_name = node.name
             except Exception as exc:
-                logger.warning("Failed to load node %s: %s", user.user_traffic.last_connected_node_uuid, exc)
+                logger.warning(
+                    "Failed to load node %s: %s",
+                    user.user_traffic.last_connected_node_uuid,
+                    exc,
+                )
 
         external_squad_name: Optional[str] = None
         if user.external_squad_uuid:
             try:
-                squad = await sdk.external_squads.get_external_squad_by_uuid(str(user.external_squad_uuid))
+                squad = await sdk.external_squads.get_external_squad_by_uuid(
+                    str(user.external_squad_uuid)
+                )
                 external_squad_name = getattr(squad, "name", None)
             except Exception as exc:
-                logger.warning("Failed to load external squad %s: %s", user.external_squad_uuid, exc)
+                logger.warning(
+                    "Failed to load external squad %s: %s",
+                    user.external_squad_uuid,
+                    exc,
+                )
 
         internal_squads = []
         if user.active_internal_squads:
@@ -177,14 +193,18 @@ async def fetch_user_info(config: RemnawaveConfig, telegram_id: int) -> Remnawav
             devices_names=devices_names,
         )
     except Exception as exc:
-        logger.exception("Remnawave lookup failed for telegram_id=%s: %s", telegram_id, exc)
+        logger.exception(
+            "Remnawave lookup failed for telegram_id=%s: %s", telegram_id, exc
+        )
         return None
     finally:
         await sdk._client.aclose()
 
 
 def format_user_info(info: RemnawaveInfo, *, title: str) -> str:
-    internal_squads = [name.strip() for name in info.internal_squads if name and name.strip()]
+    internal_squads = [
+        name.strip() for name in info.internal_squads if name and name.strip()
+    ]
     internal_lower = {name.lower() for name in internal_squads}
     if any(name == "trial" for name in internal_lower):
         subscription_kind = "НИЩЕБРОД"

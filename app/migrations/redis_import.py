@@ -145,7 +145,9 @@ async def migrate_from_redis_if_needed(*, config: Config, db: SQLiteDatabase) ->
         faq_rows = []
         if faq_order:
             for index, item_id in enumerate(faq_order, start=1):
-                payload = faq_items_raw.get(item_id.encode()) or faq_items_raw.get(item_id)
+                payload = faq_items_raw.get(item_id.encode()) or faq_items_raw.get(
+                    item_id
+                )
                 if payload is None:
                     continue
                 payload = payload.decode() if isinstance(payload, bytes) else payload
@@ -153,7 +155,9 @@ async def migrate_from_redis_if_needed(*, config: Config, db: SQLiteDatabase) ->
         else:
             for index, (item_id, payload) in enumerate(faq_items_raw.items(), start=1):
                 decoded_id = item_id.decode() if isinstance(item_id, bytes) else item_id
-                decoded_payload = payload.decode() if isinstance(payload, bytes) else payload
+                decoded_payload = (
+                    payload.decode() if isinstance(payload, bytes) else payload
+                )
                 faq_rows.append((decoded_id, decoded_payload, index))
 
         await db.executemany(
@@ -162,7 +166,11 @@ async def migrate_from_redis_if_needed(*, config: Config, db: SQLiteDatabase) ->
         )
 
         if migration_version is not None:
-            version_value = migration_version.decode() if isinstance(migration_version, bytes) else migration_version
+            version_value = (
+                migration_version.decode()
+                if isinstance(migration_version, bytes)
+                else migration_version
+            )
             await db.set_meta(MIGRATION_VERSION_KEY, str(version_value))
             logger.info("Migrated migration_version=%s from Redis.", version_value)
 

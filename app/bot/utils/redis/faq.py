@@ -97,9 +97,13 @@ class FAQStorage:
             text=text,
             attachments=attachments or [],
         )
-        async with self.db.conn.execute("SELECT MAX(sort_order) AS max_order FROM faq_items") as cursor:
+        async with self.db.conn.execute(
+            "SELECT MAX(sort_order) AS max_order FROM faq_items"
+        ) as cursor:
             row = await cursor.fetchone()
-        next_order = 1 if row is None or row["max_order"] is None else int(row["max_order"]) + 1
+        next_order = (
+            1 if row is None or row["max_order"] is None else int(row["max_order"]) + 1
+        )
         await self.db.conn.execute(
             "INSERT INTO faq_items (id, payload, sort_order) VALUES (?, ?, ?)",
             (item.id, item.to_json(), next_order),

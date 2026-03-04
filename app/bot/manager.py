@@ -75,14 +75,18 @@ class Manager:
         return message_id if isinstance(message_id, int) else None
 
     async def send_message(
-            self,
-            text: str,
-            parse_mode: str | None = UNSET_PARSE_MODE,
-            disable_web_page_preview: bool | None = UNSET_DISABLE_WEB_PAGE_PREVIEW,
-            disable_notification: bool | None = None,
-            reply_markup: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply | None = None,
-            *,
-            replace_previous: bool = True,
+        self,
+        text: str,
+        parse_mode: str | None = UNSET_PARSE_MODE,
+        disable_web_page_preview: bool | None = UNSET_DISABLE_WEB_PAGE_PREVIEW,
+        disable_notification: bool | None = None,
+        reply_markup: InlineKeyboardMarkup
+        | ReplyKeyboardMarkup
+        | ReplyKeyboardRemove
+        | ForceReply
+        | None = None,
+        *,
+        replace_previous: bool = True,
     ) -> None:
         """
         Send a message using the bot.
@@ -136,6 +140,7 @@ class Manager:
         :param message: The message that should be removed.
         :param delay: Delay in seconds before deletion.
         """
+
         async def _cleanup() -> None:
             await asyncio.sleep(delay)
             with suppress(TelegramBadRequest):

@@ -36,7 +36,9 @@ class DummyText(TextMessage):
 
 
 class DummyManager:
-    def __init__(self, language_code: str, settings: DummySettings | None, default_text: str) -> None:
+    def __init__(
+        self, language_code: str, settings: DummySettings | None, default_text: str
+    ) -> None:
         self.text_message = DummyText(language_code, default_text)
         self.user = SimpleNamespace(full_name="John Doe")
         self._middleware_data = {"settings": settings} if settings else {}

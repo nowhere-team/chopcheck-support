@@ -4,7 +4,13 @@ import html
 from aiogram import F, Router
 from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from aiogram.filters import Command, MagicData
-from aiogram.types import CallbackQuery, ForceReply, Message, InputMediaPhoto, InputMediaVideo
+from aiogram.types import (
+    CallbackQuery,
+    ForceReply,
+    Message,
+    InputMediaPhoto,
+    InputMediaVideo,
+)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.utils.markdown import hcode, hbold
@@ -17,7 +23,12 @@ from app.bot.handlers.group.panel import (
     status_keyboard,
 )
 from app.bot.utils.language import resolve_language_code
-from app.bot.utils.redis import RedisStorage, SettingsStorage, QuickReplyStorage, QuickReplyItem
+from app.bot.utils.redis import (
+    RedisStorage,
+    SettingsStorage,
+    QuickReplyStorage,
+    QuickReplyItem,
+)
 from app.bot.utils.redis.models import UserData
 from app.bot.utils.reminders import cancel_support_reminder, schedule_support_reminder
 from app.bot.utils.remnawave import fetch_user_info, format_user_info, is_configured
@@ -42,9 +53,6 @@ async def handle_id(message: Message) -> None:
     await message.reply(hcode(message.chat.id))
 
 
-
-
-
 async def _send_quick_reply(
     manager: Manager,
     item: QuickReplyItem,
@@ -63,7 +71,11 @@ async def _send_quick_reply(
 
     attachments = item.attachments
     media_group_types = {attachment.type for attachment in attachments}
-    if attachments and media_group_types.issubset({"photo", "video"}) and len(attachments) > 1:
+    if (
+        attachments
+        and media_group_types.issubset({"photo", "video"})
+        and len(attachments) > 1
+    ):
         media_group = []
         for attachment in attachments:
             if attachment.type == "photo":
@@ -108,6 +120,8 @@ async def _send_quick_reply(
             kwargs.pop("caption", None)
             kwargs.pop("parse_mode", None)
             await manager.bot.send_video_note(video_note=attachment.file_id, **kwargs)
+
+
 router = Router()
 router.message.filter(
     F.message_thread_id.is_not(None),
@@ -125,9 +139,12 @@ qr_router.callback_query.filter(
 
 
 @router.message(Command("silent"))
-async def handle_silent(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_silent(
+    message: Message, manager: Manager, redis: RedisStorage
+) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
     """
     Toggles silent mode for a user in the group.
     If silent mode is disabled, it will be enabled, and vice versa.
@@ -138,7 +155,8 @@ async def handle_silent(message: Message, manager: Manager, redis: RedisStorage)
     :return: None
     """
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
 
     if user_data.message_silent_mode:
         text = manager.text_message.get("silent_mode_disabled")
@@ -170,9 +188,12 @@ async def handle_silent(message: Message, manager: Manager, redis: RedisStorage)
 
 
 @router.message(Command("information"))
-async def handle_information(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_information(
+    message: Message, manager: Manager, redis: RedisStorage
+) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
     """
     Sends user information in response to the /information command.
 
@@ -182,15 +203,20 @@ async def handle_information(message: Message, manager: Manager, redis: RedisSto
     :return: None
     """
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
 
     info = await fetch_user_info(manager.config.remnawave, user_data.id)
     if info:
-        await message.reply(format_user_info(info, title="Remnawave: информация о пользователе"))
+        await message.reply(
+            format_user_info(info, title="Remnawave: информация о пользователе")
+        )
         return
 
     format_data = user_data.to_dict()
-    safe_name = sanitize_display_name(format_data["full_name"], placeholder=f"User {user_data.id}")
+    safe_name = sanitize_display_name(
+        format_data["full_name"], placeholder=f"User {user_data.id}"
+    )
     format_data["full_name"] = hbold(safe_name)
     text = manager.text_message.get("user_information")
     if not is_configured(manager.config.remnawave):
@@ -235,11 +261,15 @@ async def handle_del(message: Message, manager: Manager, redis: RedisStorage) ->
         await message.delete()
 
 
-async def _send_resolution_message(manager: Manager, settings: SettingsStorage, user_data: UserData) -> None:
+async def _send_resolution_message(
+    manager: Manager, settings: SettingsStorage, user_data: UserData
+) -> None:
     language_code = resolve_language_code(user_data.language_code)
     override = await settings.get_resolved_message(language_code)
     template = override or TextMessage(language_code).get("ticket_resolved_user")
-    safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
+    safe_name = sanitize_display_name(
+        user_data.full_name, placeholder=f"User {user_data.id}"
+    )
     escaped_name = html.escape(safe_name)
     text = template.format(full_name=hbold(escaped_name))
 
@@ -262,7 +292,8 @@ async def _resolve_ticket(
     notify_user: bool,
 ) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
 
     user_data.ticket_status = "resolved"
     user_data.awaiting_reply = False
@@ -306,7 +337,9 @@ async def _reopen_ticket(
     await message.reply(manager.text_message.get("ticket_reopened"))
 
 
-async def _update_panel_main_message(message: Message, manager: Manager, user_data: UserData) -> None:
+async def _update_panel_main_message(
+    message: Message, manager: Manager, user_data: UserData
+) -> None:
     markup = main_keyboard(
         user_data.id,
         ticket_status=user_data.ticket_status,
@@ -323,17 +356,40 @@ async def _update_panel_main_message(message: Message, manager: Manager, user_da
         else:
             raise
 
+
 @router.message(Command("resolve"))
-async def handle_resolve(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, settings: SettingsStorage) -> None:
+async def handle_resolve(
+    message: Message,
+    manager: Manager,
+    redis: RedisStorage,
+    apscheduler: AsyncIOScheduler,
+    settings: SettingsStorage,
+) -> None:
     await _resolve_ticket(
-        message, manager, redis, apscheduler, settings, notify_user=True,
+        message,
+        manager,
+        redis,
+        apscheduler,
+        settings,
+        notify_user=True,
     )
 
 
 @router.message(Command("resolvequiet"))
-async def handle_resolvequiet(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, settings: SettingsStorage) -> None:
+async def handle_resolvequiet(
+    message: Message,
+    manager: Manager,
+    redis: RedisStorage,
+    apscheduler: AsyncIOScheduler,
+    settings: SettingsStorage,
+) -> None:
     await _resolve_ticket(
-        message, manager, redis, apscheduler, settings, notify_user=False,
+        message,
+        manager,
+        redis,
+        apscheduler,
+        settings,
+        notify_user=False,
     )
 
 
@@ -367,7 +423,8 @@ async def handle_ban(message: Message, manager: Manager, redis: RedisStorage) ->
     :return: None
     """
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
 
     if user_data.is_banned:
         user_data.is_banned = False
@@ -416,12 +473,18 @@ async def panel_callback(
         return
 
     if action == "reply":
-        safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
-        prompt = manager.text_message.get("support_panel_reply_prompt").format(full_name=hbold(safe_name))
+        safe_name = sanitize_display_name(
+            user_data.full_name, placeholder=f"User {user_data.id}"
+        )
+        prompt = manager.text_message.get("support_panel_reply_prompt").format(
+            full_name=hbold(safe_name)
+        )
         placeholder = manager.text_message.get("support_panel_reply_placeholder")
         await call.message.answer(
             prompt,
-            reply_markup=ForceReply(selective=True, input_field_placeholder=placeholder),
+            reply_markup=ForceReply(
+                selective=True, input_field_placeholder=placeholder
+            ),
         )
         await call.answer(manager.text_message.get("support_panel_reply_hint"))
 
@@ -483,8 +546,6 @@ async def panel_callback(
             await call.answer("Пользователь не найден.", show_alert=True)
             return
 
-
-
     elif action == "quick":
         items = await quick_replies.list_items()
         if not items:
@@ -505,18 +566,24 @@ async def panel_callback(
     elif action == "info":
         info = await fetch_user_info(manager.config.remnawave, user_data.id)
         if info:
-            await call.message.answer(format_user_info(info, title="Remnawave: информация о пользователе"))
+            await call.message.answer(
+                format_user_info(info, title="Remnawave: информация о пользователе")
+            )
             await call.answer()
             return
 
         format_data = user_data.to_dict()
-        safe_name = sanitize_display_name(format_data["full_name"], placeholder=f"User {user_data.id}")
+        safe_name = sanitize_display_name(
+            format_data["full_name"], placeholder=f"User {user_data.id}"
+        )
         format_data["full_name"] = hbold(safe_name)
         text = manager.text_message.get("user_information")
         if not is_configured(manager.config.remnawave):
             text = "Remnawave не настроен. Резервная информация:\n\n" + text
         else:
-            text = "Пользователь не найден в Remnawave. Резервная информация:\n\n" + text
+            text = (
+                "Пользователь не найден в Remnawave. Резервная информация:\n\n" + text
+            )
         await call.message.answer(text.format_map(format_data))
         await call.answer()
 

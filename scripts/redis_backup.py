@@ -42,7 +42,9 @@ def load_connection() -> RedisConnection:
 def resolve_binary(name: str) -> str:
     path = shutil.which(name)
     if not path:
-        raise RuntimeError(f"Не найден исполняемый файл '{name}'. Добавьте его в PATH или укажите флагом.")
+        raise RuntimeError(
+            f"Не найден исполняемый файл '{name}'. Добавьте его в PATH или укажите флагом."
+        )
     return path
 
 
@@ -110,7 +112,9 @@ def collect_backups(directory: Path, prefix: str, suffix: str) -> list[Path]:
         [
             file
             for file in directory.iterdir()
-            if file.is_file() and file.name.startswith(f"{prefix}-") and has_suffix(file)
+            if file.is_file()
+            and file.name.startswith(f"{prefix}-")
+            and has_suffix(file)
         ],
         key=lambda file: file.stat().st_mtime,
         reverse=True,
@@ -148,7 +152,9 @@ def backup_command(args: argparse.Namespace) -> None:
 
     ensure_parent(tmp_target)
     if tmp_target.exists() and not args.force:
-        raise RuntimeError(f"Файл {tmp_target} уже существует. Укажите --force для перезаписи.")
+        raise RuntimeError(
+            f"Файл {tmp_target} уже существует. Укажите --force для перезаписи."
+        )
 
     print(f"Создаю дамп Redis в {tmp_target}...")
     run_redis_dump(executable=redis_cli, connection=connection, target=tmp_target)
@@ -222,7 +228,11 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     backup = subparsers.add_parser("backup", help="Создать RDB-дамп.")
-    backup.add_argument("--output", type=Path, help="Полный путь до файла (если не задан, используется --dir и --prefix).")
+    backup.add_argument(
+        "--output",
+        type=Path,
+        help="Полный путь до файла (если не задан, используется --dir и --prefix).",
+    )
     backup.add_argument(
         "--dir",
         dest="directory",
@@ -277,7 +287,9 @@ def build_parser() -> argparse.ArgumentParser:
         "restore",
         help="Скопировать RDB-файл в data-директорию Redis (Redis должен быть остановлен).",
     )
-    restore.add_argument("input", type=Path, help="Путь к файлу бэкапа (.rdb или .rdb.gz).")
+    restore.add_argument(
+        "input", type=Path, help="Путь к файлу бэкапа (.rdb или .rdb.gz)."
+    )
     restore.add_argument(
         "--data-dir",
         type=Path,

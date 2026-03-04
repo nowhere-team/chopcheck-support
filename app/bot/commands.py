@@ -41,31 +41,47 @@ async def setup(bot: Bot, config: Config) -> None:
             BotCommand(command="silent", description="Toggle silent mode"),
             BotCommand(command="information", description="Show user information"),
             BotCommand(command="resolve", description="Mark ticket as resolved"),
-            BotCommand(command="resolvequiet", description="Resolve ticket without user message"),
+            BotCommand(
+                command="resolvequiet",
+                description="Resolve ticket without user message",
+            ),
         ],
         "ru": [
-            BotCommand(command="ban", description="Заблокировать/разблокировать пользователя"),
+            BotCommand(
+                command="ban", description="Заблокировать/разблокировать пользователя"
+            ),
             BotCommand(command="silent", description="Включить/выключить тихий режим"),
-            BotCommand(command="information", description="Показать информацию о пользователе"),
+            BotCommand(
+                command="information", description="Показать информацию о пользователе"
+            ),
             BotCommand(command="resolve", description="Отметить тикет решённым"),
-            BotCommand(command="resolvequiet", description="Закрыть тикет без сообщения пользователю"),
+            BotCommand(
+                command="resolvequiet",
+                description="Закрыть тикет без сообщения пользователю",
+            ),
         ],
     }
 
     admin_commands = {
-        "en": commands["en"].copy() + [
+        "en": commands["en"].copy()
+        + [
             BotCommand(command="banned", description="Show banned users"),
             BotCommand(command="unban", description="Unban a user"),
             BotCommand(command="newsletter", description="Open the newsletter menu"),
             BotCommand(command="greeting", description="Open the greeting settings"),
             BotCommand(command="closing", description="Configure closing message"),
         ],
-        "ru": commands["ru"].copy() + [
-            BotCommand(command="banned", description="Показать забаненных пользователей"),
+        "ru": commands["ru"].copy()
+        + [
+            BotCommand(
+                command="banned", description="Показать забаненных пользователей"
+            ),
             BotCommand(command="unban", description="Разбанить пользователя"),
             BotCommand(command="newsletter", description="Меню рассылки"),
             BotCommand(command="greeting", description="Настройки приветствия"),
-            BotCommand(command="closing", description="Настроить сообщение после закрытия"),
+            BotCommand(
+                command="closing", description="Настроить сообщение после закрытия"
+            ),
         ],
     }
 

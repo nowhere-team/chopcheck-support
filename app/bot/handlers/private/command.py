@@ -17,10 +17,10 @@ router.callback_query.filter(F.message.chat.type == "private")
 
 @router.message(Command("start"))
 async def handle_start(
-        message: Message,
-        manager: Manager,
-        redis: RedisStorage,
-        user_data: UserData,
+    message: Message,
+    manager: Manager,
+    redis: RedisStorage,
+    user_data: UserData,
 ) -> None:
     """
     Handles the /start command.
@@ -55,7 +55,9 @@ async def handle_start(
 
 
 @router.message(Command("language"))
-async def handle_language(message: Message, manager: Manager, user_data: UserData) -> None:
+async def handle_language(
+    message: Message, manager: Manager, user_data: UserData
+) -> None:
     """
     Handles the /language command.
 
@@ -79,10 +81,10 @@ async def handle_language(message: Message, manager: Manager, user_data: UserDat
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),
 )
 async def handle_newsletter(
-        message: Message,
-        manager: Manager,
-        an_manager: ANManager,
-        redis: RedisStorage,
+    message: Message,
+    manager: Manager,
+    an_manager: ANManager,
+    redis: RedisStorage,
 ) -> None:
     """
     Handles the /newsletter command.
@@ -103,10 +105,10 @@ async def handle_newsletter(
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore
 )
 async def newsletter_from_menu(
-        call: CallbackQuery,
-        manager: Manager,
-        an_manager: ANManager,
-        redis: RedisStorage,
+    call: CallbackQuery,
+    manager: Manager,
+    an_manager: ANManager,
+    redis: RedisStorage,
 ) -> None:
     users_ids = await redis.get_all_users_ids()
     await an_manager.newsletter_menu(users_ids, Window.main_menu)

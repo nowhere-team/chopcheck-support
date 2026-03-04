@@ -18,6 +18,7 @@ class BotConfig:
     WEBHOOK_URL: str
     WEBHOOK_SECRET: str
 
+
 @dataclass
 class RedisConfig:
     """
@@ -28,6 +29,7 @@ class RedisConfig:
     - PORT (int): The Redis port.
     - DB (int): The Redis database number.
     """
+
     HOST: str
     PORT: int
     DB: int
@@ -53,6 +55,7 @@ class SQLiteConfig:
     Attributes:
     - PATH (str): Path to SQLite database file.
     """
+
     PATH: str
 
 
@@ -61,6 +64,7 @@ class RemnawaveConfig:
     """
     Data class representing Remnawave configuration.
     """
+
     API_BASE: str
     API_TOKEN: str
     CADDY_TOKEN: str | None
@@ -78,6 +82,7 @@ class Config:
     - redis (RedisConfig | None): Optional Redis configuration for migration.
     - security_enabled (bool): Toggles anti-spam security filters.
     """
+
     bot: BotConfig
     sqlite: SQLiteConfig
     redis: RedisConfig | None
@@ -106,7 +111,9 @@ def load_config() -> Config:
             BOT_ACTIVE_EMOJI_ID=env.str("BOT_ACTIVE_EMOJI_ID"),
             BOT_RESOLVED_EMOJI_ID=env.str("BOT_RESOLVED_EMOJI_ID"),
             DEFAULT_LANGUAGE=env.str("BOT_DEFAULT_LANGUAGE", default="en"),
-            LANGUAGE_PROMPT_ENABLED=env.bool("BOT_LANGUAGE_PROMPT_ENABLED", default=True),
+            LANGUAGE_PROMPT_ENABLED=env.bool(
+                "BOT_LANGUAGE_PROMPT_ENABLED", default=True
+            ),
             REMINDERS_ENABLED=env.bool("BOT_REMINDERS_ENABLED", default=True),
             WEBHOOK_URL=env.str("WEBHOOK_URL", default=""),
             WEBHOOK_SECRET=env.str("WEBHOOK_SECRET", default=""),

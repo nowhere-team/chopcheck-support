@@ -25,11 +25,15 @@ async def sanitize_existing_display_names(context: "MigrationContext") -> None:
             continue
 
         placeholder = f"User {user_data.id}"
-        sanitized_full_name = sanitize_display_name(user_data.full_name, placeholder=placeholder)
+        sanitized_full_name = sanitize_display_name(
+            user_data.full_name, placeholder=placeholder
+        )
 
         needs_update = sanitized_full_name != user_data.full_name
         if needs_update:
-            logger.debug("Updating stored name for user %s -> %s", user_id, sanitized_full_name)
+            logger.debug(
+                "Updating stored name for user %s -> %s", user_id, sanitized_full_name
+            )
             user_data.full_name = sanitized_full_name
             await context.storage.update_user(user_id, user_data)
 

@@ -16,10 +16,10 @@ router.my_chat_member.filter(F.chat.type == "private")
 
 @router.my_chat_member()
 async def handle_chat_member_update(
-        update: ChatMemberUpdated,
-        redis: RedisStorage,
-        user_data: UserData,
-        manager: Manager,
+    update: ChatMemberUpdated,
+    redis: RedisStorage,
+    user_data: UserData,
+    manager: Manager,
 ) -> None:
     """
     Handle updates of the bot chat member status.
@@ -39,8 +39,14 @@ async def handle_chat_member_update(
     else:
         text = manager.text_message.get("user_stopped_bot")
 
-    url = f"https://t.me/{user_data.username[1:]}" if user_data.username != "-" else f"tg://user?id={user_data.id}"
-    safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
+    url = (
+        f"https://t.me/{user_data.username[1:]}"
+        if user_data.username != "-"
+        else f"tg://user?id={user_data.id}"
+    )
+    safe_name = sanitize_display_name(
+        user_data.full_name, placeholder=f"User {user_data.id}"
+    )
 
     if user_data.message_thread_id is None:
         user_data.message_thread_id = await create_forum_topic(

@@ -27,7 +27,7 @@ class SettingsStorage:
             key = row["key"]
             if not key.startswith(prefix):
                 continue
-            language = key[len(prefix):]
+            language = key[len(prefix) :]
             result[language] = row["value"]
 
         return result

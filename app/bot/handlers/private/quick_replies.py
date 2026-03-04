@@ -53,47 +53,71 @@ def _collect_attachments(
     if message.photo:
         file_id = message.photo[-1].file_id
         attachments.append(
-            QuickReplyAttachment(type="photo", file_id=file_id, caption=message.caption or None)
+            QuickReplyAttachment(
+                type="photo", file_id=file_id, caption=message.caption or None
+            )
         )
         if message.caption:
             text = None
     elif message.video:
         attachments.append(
-            QuickReplyAttachment(type="video", file_id=message.video.file_id, caption=message.caption or None)
+            QuickReplyAttachment(
+                type="video",
+                file_id=message.video.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.document:
         attachments.append(
-            QuickReplyAttachment(type="document", file_id=message.document.file_id, caption=message.caption or None)
+            QuickReplyAttachment(
+                type="document",
+                file_id=message.document.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.animation:
         attachments.append(
-            QuickReplyAttachment(type="animation", file_id=message.animation.file_id, caption=message.caption or None)
+            QuickReplyAttachment(
+                type="animation",
+                file_id=message.animation.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.audio:
         attachments.append(
-            QuickReplyAttachment(type="audio", file_id=message.audio.file_id, caption=message.caption or None)
+            QuickReplyAttachment(
+                type="audio",
+                file_id=message.audio.file_id,
+                caption=message.caption or None,
+            )
         )
         if message.caption:
             text = None
     elif message.voice:
         attachments.append(
-            QuickReplyAttachment(type="voice", file_id=message.voice.file_id, caption=None)
+            QuickReplyAttachment(
+                type="voice", file_id=message.voice.file_id, caption=None
+            )
         )
     elif message.video_note:
         attachments.append(
-            QuickReplyAttachment(type="video_note", file_id=message.video_note.file_id, caption=None)
+            QuickReplyAttachment(
+                type="video_note", file_id=message.video_note.file_id, caption=None
+            )
         )
 
     return text, attachments
 
 
-def _render_admin_overview(items: Iterable[QuickReplyItem]) -> tuple[str, InlineKeyboardBuilder]:
+def _render_admin_overview(
+    items: Iterable[QuickReplyItem],
+) -> tuple[str, InlineKeyboardBuilder]:
     items = list(items)
     builder = InlineKeyboardBuilder()
     lines = ["<b>Быстрые ответы</b>"]
@@ -102,7 +126,9 @@ def _render_admin_overview(items: Iterable[QuickReplyItem]) -> tuple[str, Inline
     else:
         lines.append("Выберите элемент для редактирования или добавьте новый ответ.")
         for idx, item in enumerate(items, start=1):
-            builder.button(text=f"{idx}. {item.title}", callback_data=f"qr:manage:{item.id}")
+            builder.button(
+                text=f"{idx}. {item.title}", callback_data=f"qr:manage:{item.id}"
+            )
             lines.append(f"{idx}. {hbold(html.escape(item.title))}")
     builder.button(text="➕ Добавить ответ", callback_data="qr:add")
     builder.button(text="⬅️ Назад", callback_data="admin:menu")
@@ -114,7 +140,9 @@ async def _show_admin_overview(manager: Manager, storage: QuickReplyStorage) -> 
     items = await storage.list_items()
     text, builder = _render_admin_overview(items)
     await manager.state.set_state(None)
-    await manager.send_message(text, reply_markup=builder.as_markup(), replace_previous=False)
+    await manager.send_message(
+        text, reply_markup=builder.as_markup(), replace_previous=False
+    )
 
 
 async def _show_admin_item_menu(manager: Manager, item: QuickReplyItem) -> None:
@@ -138,11 +166,19 @@ async def _show_admin_item_menu(manager: Manager, item: QuickReplyItem) -> None:
         preview_lines.append("")
         preview_lines.append(f"Вложения: {len(item.attachments)}")
 
-    await manager.send_message("\n".join(preview_lines), reply_markup=builder.as_markup(), replace_previous=False)
+    await manager.send_message(
+        "\n".join(preview_lines),
+        reply_markup=builder.as_markup(),
+        replace_previous=False,
+    )
 
 
-@router.message(Command("quick"), MagicData(F.event_from_user.id == F.config.bot.DEV_ID))  # type: ignore[attr-defined]
-async def admin_command_quick(message: Message, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+@router.message(
+    Command("quick"), MagicData(F.event_from_user.id == F.config.bot.DEV_ID)
+)  # type: ignore[attr-defined]
+async def admin_command_quick(
+    message: Message, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     await _show_admin_overview(manager, quick_replies)
     await manager.delete_message(message)
 
@@ -151,7 +187,9 @@ async def admin_command_quick(message: Message, manager: Manager, quick_replies:
     F.data == "admin:quick_replies",
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_open_quick_replies(call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_open_quick_replies(
+    call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     await _show_admin_overview(manager, quick_replies)
     await call.answer()
 
@@ -163,7 +201,9 @@ async def admin_open_quick_replies(call: CallbackQuery, manager: Manager, quick_
 async def admin_add_quick_reply(call: CallbackQuery, manager: Manager) -> None:
     await manager.state.set_state(QuickReplyStates.waiting_title)
     await manager.state.update_data(qr_item_id=None)
-    await manager.send_message("Введите заголовок для быстрого ответа.", replace_previous=False)
+    await manager.send_message(
+        "Введите заголовок для быстрого ответа.", replace_previous=False
+    )
     await call.answer()
 
 
@@ -193,18 +233,24 @@ async def admin_receive_content(
     try:
         text, attachments = _collect_attachments(message, album=album)
     except ValueError:
-        await message.answer("Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением.")
+        await message.answer(
+            "Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением."
+        )
         return
 
     if text is None and not attachments:
-        await message.answer("Ответ должен содержать текст или вложение. Попробуйте ещё раз.")
+        await message.answer(
+            "Ответ должен содержать текст или вложение. Попробуйте ещё раз."
+        )
         return
 
     state = await manager.state.get_data()
     title = state.get("qr_title")
     if not title:
         await manager.state.set_state(None)
-        await message.answer("Не удалось определить заголовок. Начните добавление заново.")
+        await message.answer(
+            "Не удалось определить заголовок. Начните добавление заново."
+        )
         return
 
     await quick_replies.add_item(title=title, text=text, attachments=attachments)
@@ -218,7 +264,9 @@ async def admin_receive_content(
     F.data.startswith("qr:manage:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_manage_item(call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_manage_item(
+    call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     item = await quick_replies.get_item(item_id)
     if item is None:
@@ -234,7 +282,9 @@ async def admin_manage_item(call: CallbackQuery, manager: Manager, quick_replies
     F.data.startswith("qr:rename:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_start_rename(call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_start_rename(
+    call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     item = await quick_replies.get_item(item_id)
     if item is None:
@@ -251,7 +301,9 @@ async def admin_start_rename(call: CallbackQuery, manager: Manager, quick_replie
 
 
 @router.message(StateFilter(QuickReplyStates.editing_title))
-async def admin_rename_item(message: Message, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_rename_item(
+    message: Message, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     new_title = (message.text or "").strip()
     if not new_title:
         await message.answer("Заголовок не может быть пустым. Попробуйте снова.")
@@ -279,7 +331,9 @@ async def admin_rename_item(message: Message, manager: Manager, quick_replies: Q
     F.data.startswith("qr:content:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_start_update_content(call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_start_update_content(
+    call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     item = await quick_replies.get_item(item_id)
     if item is None:
@@ -305,11 +359,15 @@ async def admin_update_content(
     try:
         text, attachments = _collect_attachments(message, album=album)
     except ValueError:
-        await message.answer("Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением.")
+        await message.answer(
+            "Медиа-альбомы пока не поддерживаются. Отправьте ответ одним сообщением."
+        )
         return
 
     if text is None and not attachments:
-        await message.answer("Ответ должен содержать текст или вложение. Попробуйте ещё раз.")
+        await message.answer(
+            "Ответ должен содержать текст или вложение. Попробуйте ещё раз."
+        )
         return
 
     state = await manager.state.get_data()
@@ -319,7 +377,9 @@ async def admin_update_content(
         await message.answer("Не удалось определить элемент. Начните заново.")
         return
 
-    updated = await quick_replies.update_content(item_id, text=text, attachments=attachments)
+    updated = await quick_replies.update_content(
+        item_id, text=text, attachments=attachments
+    )
     if updated is None:
         await manager.state.set_state(None)
         await message.answer("Элемент уже удалён.")
@@ -334,7 +394,9 @@ async def admin_update_content(
     F.data == "qr:admin_back",
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_back_to_list(call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_back_to_list(
+    call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     await _show_admin_overview(manager, quick_replies)
     await call.answer()
 
@@ -343,7 +405,9 @@ async def admin_back_to_list(call: CallbackQuery, manager: Manager, quick_replie
     F.data.startswith("qr:delete:"),
     MagicData(F.event_from_user.id == F.config.bot.DEV_ID),  # type: ignore[attr-defined]
 )
-async def admin_delete_item(call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage) -> None:
+async def admin_delete_item(
+    call: CallbackQuery, manager: Manager, quick_replies: QuickReplyStorage
+) -> None:
     item_id = call.data.split(":", maxsplit=2)[-1]
     await quick_replies.delete_item(item_id)
     await manager.state.set_state(None)

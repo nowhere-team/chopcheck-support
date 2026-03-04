@@ -26,7 +26,7 @@ def setup_logger() -> None:
     # Set up basic logging configuration
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # noqa
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",  # noqa
         handlers=[
             # Add a timed rotating file handler to log to a file
             TimedRotatingFileHandler(
@@ -37,7 +37,7 @@ def setup_logger() -> None:
             ),
             # Add a stream handler to log to the console
             logging.StreamHandler(),
-        ]
+        ],
     )
     # Set the log level for aiogram.event and httpx logger to CRITICAL
     aiogram_logger = logging.getLogger("aiogram.event")
