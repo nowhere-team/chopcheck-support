@@ -11,6 +11,7 @@ from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.bot.utils.redis import RedisStorage
+from app.bot.utils.session import make_bot_session
 from app.bot.utils.sqlite import SQLiteDatabase
 from app.bot.utils.security import sanitize_display_name
 from app.bot.utils.texts import TextMessage
@@ -55,6 +56,7 @@ async def send_support_reminder(
         bot = Bot(
             token=bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+            session=make_bot_session(),
         )
         try:
             await bot.send_message(

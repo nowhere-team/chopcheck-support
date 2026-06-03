@@ -15,6 +15,7 @@ from .bot import commands
 from .bot.handlers import include_routers
 from .bot.middlewares import register_middlewares
 from .bot.utils.fsm_storage import SQLiteFSMStorage
+from .bot.utils.session import make_bot_session
 from .bot.utils.sqlite import SQLiteDatabase
 from .config import load_config
 from .logger import setup_logger
@@ -96,6 +97,7 @@ def main() -> None:
     bot = Bot(
         token=config.bot.TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        session=make_bot_session(),
     )
     dp = Dispatcher(
         apscheduler=apscheduler,
