@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -46,14 +47,21 @@ async def on_startup(
     apscheduler.start()
     await commands.setup(bot, config)
 
-    webhook_url = f"{config.bot.WEBHOOK_URL}/webhook"
-    await bot.set_webhook(
-        url=webhook_url,
-        secret_token=config.bot.WEBHOOK_SECRET,
-        allowed_updates=dispatcher.resolve_used_update_types(),
-        drop_pending_updates=True,
-    )
-    logger.info("webhook registered: %s", webhook_url)
+    # In RU prod telegram can't reach the server inbound (block is symmetric),
+    # so webhook delivery times out -> run polling and pull updates outbound
+    # through the proxy instead.
+    if os.environ.get("BOT_MODE", "webhook").lower() == "polling":
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("polling mode: webhook deleted, using getUpdates")
+    else:
+        webhook_url = f"{config.bot.WEBHOOK_URL}/webhook"
+        await bot.set_webhook(
+            url=webhook_url,
+            secret_token=config.bot.WEBHOOK_SECRET,
+            allowed_updates=dispatcher.resolve_used_update_types(),
+            drop_pending_updates=True,
+        )
+        logger.info("webhook registered: %s", webhook_url)
 
 
 async def on_shutdown(
@@ -73,6 +81,21 @@ async def on_shutdown(
 
 async def health_handler(_: web.Request) -> web.Response:
     return web.json_response({"status": "ok"})
+
+
+async def _run_polling(bot: Bot, dp: Dispatcher, port: int) -> None:
+    # health endpoint for the docker healthcheck runs alongside polling
+    app = web.Application()
+    app.router.add_get("/health", health_handler)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=port)
+    await site.start()
+    logger.info("listening on 0.0.0.0:%d (polling mode)", port)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await runner.cleanup()
 
 
 def main() -> None:
@@ -113,6 +136,12 @@ def main() -> None:
     include_routers(dp)
     register_middlewares(dp, config=config, db=db, apscheduler=apscheduler)
 
+    port = int(os.environ.get("PORT", 8080))
+
+    if os.environ.get("BOT_MODE", "webhook").lower() == "polling":
+        asyncio.run(_run_polling(bot, dp, port))
+        return
+
     app = web.Application()
     app.router.add_get("/health", health_handler)
 
@@ -124,7 +153,6 @@ def main() -> None:
     webhook_handler.register(app, path="/webhook")
     setup_application(app, dp, bot=bot)
 
-    port = int(os.environ.get("PORT", 8080))
     logger.info("listening on 0.0.0.0:%d", port)
     web.run_app(app, host="0.0.0.0", port=port)
 
