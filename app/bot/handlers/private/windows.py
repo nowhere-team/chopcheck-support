@@ -25,7 +25,8 @@ def select_language_markup() -> Markup:
         *[
             Button(text=text, callback_data=callback_data)
             for callback_data, text in SUPPORTED_LANGUAGES.items()
-        ], width=2
+        ],
+        width=2,
     )
     return builder.as_markup()
 
@@ -56,7 +57,6 @@ def admin_main_menu_markup(manager: Manager) -> InlineKeyboardBuilder | None:
 
 
 class Window:
-
     @staticmethod
     async def select_language(manager: Manager) -> None:
         """
@@ -106,13 +106,17 @@ class Window:
 
         reply_markup = builder.as_markup() if has_buttons else None
 
-        await manager.send_message(text, reply_markup=reply_markup, replace_previous=False)
+        await manager.send_message(
+            text, reply_markup=reply_markup, replace_previous=False
+        )
         await manager.state.set_state(None)
 
         redis: RedisStorage | None = manager.middleware_data.get("redis")
         user_data: UserData | None = manager.middleware_data.get("user_data")
         if redis is not None and user_data is not None:
-            await get_or_create_forum_topic(manager.bot, redis, manager.config, user_data)
+            await get_or_create_forum_topic(
+                manager.bot, redis, manager.config, user_data
+            )
 
     @staticmethod
     async def change_language(manager: Manager) -> None:
@@ -125,4 +129,3 @@ class Window:
         text = manager.text_message.get("change_language")
         reply_markup = select_language_markup()
         await manager.send_message(text, reply_markup=reply_markup)
-

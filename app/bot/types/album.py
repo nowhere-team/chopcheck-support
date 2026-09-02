@@ -18,7 +18,9 @@ from aiogram.types.base import UNSET_PROTECT_CONTENT
 from pydantic import Field
 
 Media = Union[PhotoSize, Video, Audio, Document]
-InputMedia = Union[InputMediaPhoto, InputMediaVideo, InputMediaAudio, InputMediaDocument]
+InputMedia = Union[
+    InputMediaPhoto, InputMediaVideo, InputMediaAudio, InputMediaDocument
+]
 
 INPUT_TYPES: Dict[str, Type[InputMedia]] = {
     "photo": InputMediaPhoto,
@@ -58,7 +60,9 @@ class Album(TelegramObject):
         """
         bot = cast(Bot, self.bot)
         group = [
-            INPUT_TYPES[media_type](media=media.file_id, parse_mode=bot.default.parse_mode)
+            INPUT_TYPES[media_type](
+                media=media.file_id, parse_mode=bot.default.parse_mode
+            )
             for media_type in self.media_types
             for media in getattr(self, media_type)
         ]
@@ -67,13 +71,13 @@ class Album(TelegramObject):
         return group
 
     def copy_to(
-            self,
-            chat_id: Union[int, str],
-            message_thread_id: Optional[int] = None,
-            disable_notification: Optional[bool] = None,
-            protect_content: Optional[bool] = UNSET_PROTECT_CONTENT,
-            reply_to_message_id: Optional[int] = None,
-            allow_sending_without_reply: Optional[bool] = None,
+        self,
+        chat_id: Union[int, str],
+        message_thread_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        protect_content: Optional[bool] = UNSET_PROTECT_CONTENT,
+        reply_to_message_id: Optional[int] = None,
+        allow_sending_without_reply: Optional[bool] = None,
     ) -> SendMediaGroup:
         """
         Copy the album to a SendMediaGroup object for sending.

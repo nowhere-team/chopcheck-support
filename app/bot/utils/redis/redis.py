@@ -117,18 +117,22 @@ class RedisStorage:
         async with self.db.conn.execute("SELECT id FROM users") as cursor:
             rows = await cursor.fetchall()
         return [int(row["id"]) for row in rows]
-    
+
     async def get_banned_users(self) -> list[UserData]:
         """
         Retrieves all banned users.
-        
+
         :return: A list of banned UserData objects.
         """
-        async with self.db.conn.execute("SELECT * FROM users WHERE is_banned = 1") as cursor:
+        async with self.db.conn.execute(
+            "SELECT * FROM users WHERE is_banned = 1"
+        ) as cursor:
             rows = await cursor.fetchall()
         return [_row_to_user(row) for row in rows]
 
-    async def add_message_link(self, thread_message_id: int, user_id: int, user_message_id: int) -> None:
+    async def add_message_link(
+        self, thread_message_id: int, user_id: int, user_message_id: int
+    ) -> None:
         await self.db.conn.execute(
             """
             INSERT INTO message_links (thread_message_id, user_id, user_message_id)

@@ -4,7 +4,12 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User, Chat
 
 from app.bot.utils.language import resolve_language_code
-from app.bot.utils.redis import RedisStorage, SettingsStorage, FAQStorage, QuickReplyStorage
+from app.bot.utils.redis import (
+    RedisStorage,
+    SettingsStorage,
+    FAQStorage,
+    QuickReplyStorage,
+)
 from app.bot.utils.redis.models import UserData
 from app.bot.utils.sqlite import SQLiteDatabase
 from app.bot.utils.texts import SUPPORTED_LANGUAGES
@@ -31,10 +36,10 @@ class RedisMiddleware(BaseMiddleware):
         self.language_prompt_enabled = config.bot.LANGUAGE_PROMPT_ENABLED
 
     async def __call__(
-            self,
-            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-            event: TelegramObject,
-            data: Dict[str, Any],
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
     ) -> Any:
         """
         Call the middleware.

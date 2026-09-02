@@ -1,0 +1,2 @@
+* text=auto eol=lf
+*.{py,md,biome.json} text eol=lf

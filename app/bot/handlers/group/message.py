@@ -26,31 +26,47 @@ router.message.filter(
 
 
 @router.message(F.forum_topic_created)
-async def handler(message: Message, manager: Manager, redis: RedisStorage) -> None:
+async def handle_forum_topic_created(
+    message: Message, manager: Manager, redis: RedisStorage
+) -> None:
     await asyncio.sleep(3)
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
 
     # Generate a URL for the user's profile
-    url = f"https://t.me/{user_data.username[1:]}" if user_data.username != "-" else f"tg://user?id={user_data.id}"
+    url = (
+        f"https://t.me/{user_data.username[1:]}"
+        if user_data.username != "-"
+        else f"tg://user?id={user_data.id}"
+    )
 
     # Get the appropriate text based on the user's state
-    topic_language = resolve_language_code(user_data.language_code or manager.config.bot.DEFAULT_LANGUAGE)
+    topic_language = resolve_language_code(
+        user_data.language_code or manager.config.bot.DEFAULT_LANGUAGE
+    )
     text = TextMessage(topic_language).get("user_started_bot")
-    safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
+    safe_name = sanitize_display_name(
+        user_data.full_name, placeholder=f"User {user_data.id}"
+    )
 
     message = await message.bot.send_message(
         chat_id=manager.config.bot.GROUP_ID,
         text=text.format(name=hlink(safe_name, url)),
-        message_thread_id=user_data.message_thread_id
+        message_thread_id=user_data.message_thread_id,
     )
 
     # Pin the message
     await message.pin()
 
 
-@router.message(F.pinned_message | F.forum_topic_edited | F.forum_topic_closed | F.forum_topic_reopened)
-async def handler(message: Message) -> None:
+@router.message(
+    F.pinned_message
+    | F.forum_topic_edited
+    | F.forum_topic_closed
+    | F.forum_topic_reopened
+)
+async def handle_service_message(message: Message) -> None:
     """
     Delete service messages such as pinned, edited, closed, or reopened forum topics.
 
@@ -62,23 +78,20 @@ async def handler(message: Message) -> None:
 
 @router.message(F.media_group_id, F.from_user[F.is_bot.is_(False)])
 @router.message(F.media_group_id.is_(None), F.from_user[F.is_bot.is_(False)])
-async def handler(message: Message, manager: Manager, redis: RedisStorage, apscheduler: AsyncIOScheduler, album: Optional[Album] = None) -> None:
-    """
-    Handles user messages and sends them to the respective user.
-    If silent mode is enabled for the user, the messages are ignored.
-
-    :param message: Message object.
-    :param manager: Manager object.
-    :param redis: RedisStorage object.
-    :param album: Album object or None.
-    :return: None
-    """
+async def handle_operator_message(
+    message: Message,
+    manager: Manager,
+    redis: RedisStorage,
+    apscheduler: AsyncIOScheduler,
+    album: Optional[Album] = None,
+) -> None:
     user_data = await redis.get_by_message_thread_id(message.message_thread_id)
-    if not user_data: return None  # noqa
+    if not user_data:
+        return None  # noqa
 
     if user_data.message_silent_mode:
         # If silent mode is enabled, ignore all messages.
-        return
+        return None
 
     text = manager.text_message.get("message_sent_to_user")
 
@@ -125,4 +138,3 @@ async def handler(message: Message, manager: Manager, redis: RedisStorage, apsch
         apscheduler,
         user_data.id,
     )
-

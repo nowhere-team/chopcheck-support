@@ -11,6 +11,7 @@ from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.bot.utils.redis import RedisStorage
+from app.bot.utils.session import make_bot_session
 from app.bot.utils.sqlite import SQLiteDatabase
 from app.bot.utils.security import sanitize_display_name
 from app.bot.utils.texts import TextMessage
@@ -37,18 +38,25 @@ async def send_support_reminder(
     storage = RedisStorage(db)
     try:
         user_data = await storage.get_user(user_id)
-        if not user_data or not user_data.awaiting_reply or user_data.ticket_status != "open":
+        if (
+            not user_data
+            or not user_data.awaiting_reply
+            or user_data.ticket_status != "open"
+        ):
             return
 
         language = language_code or user_data.language_code or "en"
         text_template = TextMessage(language).get("support_reminder")
-        safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
+        safe_name = sanitize_display_name(
+            user_data.full_name, placeholder=f"User {user_data.id}"
+        )
         user_link = hlink(safe_name, f"tg://user?id={user_data.id}")
         text = text_template.format(user=user_link)
 
         bot = Bot(
             token=bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+            session=make_bot_session(),
         )
         try:
             await bot.send_message(

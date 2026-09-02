@@ -106,19 +106,25 @@ async def _send_menu(manager: Manager, settings: SettingsStorage) -> None:
 
 
 @router.message(Command("closing"))
-async def show_menu(message: Message, manager: Manager, settings: SettingsStorage) -> None:
+async def show_menu(
+    message: Message, manager: Manager, settings: SettingsStorage
+) -> None:
     await _send_menu(manager, settings)
     await manager.delete_message(message)
 
 
 @router.callback_query(F.data == "admin:closing")
-async def open_from_menu(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def open_from_menu(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     await _send_menu(manager, settings)
     await call.answer()
 
 
 @router.callback_query(F.data.startswith("resolve:set:"))
-async def start_edit(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def start_edit(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     language = call.data.split(":", maxsplit=2)[-1]
     if language not in SUPPORTED_LANGUAGES:
         await call.answer("Неизвестный язык.", show_alert=True)
@@ -140,13 +146,17 @@ async def start_edit(call: CallbackQuery, manager: Manager, settings: SettingsSt
 
 
 @router.callback_query(F.data == "resolve:back")
-async def back_to_menu(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def back_to_menu(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     await _send_menu(manager, settings)
     await call.answer()
 
 
 @router.callback_query(F.data.startswith("resolve:reset:"))
-async def reset_resolution(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def reset_resolution(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     language = call.data.split(":", maxsplit=2)[-1]
     if language not in SUPPORTED_LANGUAGES:
         await call.answer("Неизвестный язык.", show_alert=True)
@@ -168,7 +178,9 @@ async def close_menu(call: CallbackQuery, manager: Manager) -> None:
 
 
 @router.message(StateFilter(ResolutionStates.waiting_for_text))
-async def save_resolution(message: Message, manager: Manager, settings: SettingsStorage) -> None:
+async def save_resolution(
+    message: Message, manager: Manager, settings: SettingsStorage
+) -> None:
     state_data = await manager.state.get_data()
     language = state_data.get("resolution_language")
     content = (message.text or message.caption or "").strip()

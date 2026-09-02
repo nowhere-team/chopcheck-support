@@ -13,11 +13,11 @@ class ThrottlingMiddleware(BaseMiddleware):
     """
 
     def __init__(
-            self,
-            *,
-            default_key: Optional[str] = "default",
-            default_ttl: float = 0.05,
-            **ttl_map: float,
+        self,
+        *,
+        default_key: Optional[str] = "default",
+        default_ttl: float = 0.05,
+        **ttl_map: float,
     ) -> None:
         """
         Initialize the ThrottlingMiddleware.
@@ -34,10 +34,10 @@ class ThrottlingMiddleware(BaseMiddleware):
             self.caches[name] = TTLCache(maxsize=10_000, ttl=ttl)
 
     async def __call__(
-            self,
-            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-            event: TelegramObject,
-            data: Dict[str, Any],
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
     ) -> Optional[Any]:
         """
         Call the middleware.

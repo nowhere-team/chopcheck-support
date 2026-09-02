@@ -14,9 +14,15 @@ PANEL_NAMESPACE = "support_panel"
 
 
 def panel_text(texts: TextMessage, user_data: UserData) -> str:
-    status_key = "ticket_status_open" if user_data.ticket_status == "open" else "ticket_status_resolved"
+    status_key = (
+        "ticket_status_open"
+        if user_data.ticket_status == "open"
+        else "ticket_status_resolved"
+    )
     status_text = texts.get(status_key)
-    safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
+    safe_name = sanitize_display_name(
+        user_data.full_name, placeholder=f"User {user_data.id}"
+    )
     return texts.get("support_panel_prompt").format(
         full_name=hbold(safe_name),
         status=status_text,

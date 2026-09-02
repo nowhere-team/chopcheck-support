@@ -43,7 +43,9 @@ class QuickReplyItem:
     def from_json(cls, payload: str) -> "QuickReplyItem":
         data = json.loads(payload)
         attachments_data: Iterable[dict[str, Any]] = data.get("attachments", [])
-        attachments = [QuickReplyAttachment.from_dict(item) for item in attachments_data]
+        attachments = [
+            QuickReplyAttachment.from_dict(item) for item in attachments_data
+        ]
         return cls(
             id=data["id"],
             title=data["title"],
@@ -67,7 +69,9 @@ class QuickReplyStorage:
         return [QuickReplyItem.from_json(row["payload"]) for row in rows]
 
     async def has_items(self) -> bool:
-        async with self.db.conn.execute("SELECT 1 FROM quick_reply_items LIMIT 1") as cursor:
+        async with self.db.conn.execute(
+            "SELECT 1 FROM quick_reply_items LIMIT 1"
+        ) as cursor:
             row = await cursor.fetchone()
         return row is not None
 
@@ -93,9 +97,13 @@ class QuickReplyStorage:
             text=text,
             attachments=attachments or [],
         )
-        async with self.db.conn.execute("SELECT MAX(sort_order) AS max_order FROM quick_reply_items") as cursor:
+        async with self.db.conn.execute(
+            "SELECT MAX(sort_order) AS max_order FROM quick_reply_items"
+        ) as cursor:
             row = await cursor.fetchone()
-        next_order = 1 if row is None or row["max_order"] is None else int(row["max_order"]) + 1
+        next_order = (
+            1 if row is None or row["max_order"] is None else int(row["max_order"]) + 1
+        )
         await self.db.conn.execute(
             "INSERT INTO quick_reply_items (id, payload, sort_order) VALUES (?, ?, ?)",
             (item.id, item.to_json(), next_order),

@@ -1,11 +1,14 @@
 import asyncio
 import logging
+import os
 import time
 from pathlib import Path
 
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -13,31 +16,62 @@ from .bot import commands
 from .bot.handlers import include_routers
 from .bot.middlewares import register_middlewares
 from .bot.utils.fsm_storage import SQLiteFSMStorage
+from .bot.utils.session import make_bot_session
 from .bot.utils.sqlite import SQLiteDatabase
-from .config import load_config, Config
+from .config import load_config
 from .logger import setup_logger
 from .migrations import run_migrations
 from .migrations.redis_import import migrate_from_redis_if_needed
 
 
-async def on_shutdown(
+logger = logging.getLogger("support_bot.startup")
+
+
+async def on_startup(
+    bot: Bot,
+    config,
+    db: SQLiteDatabase,
     apscheduler: AsyncIOScheduler,
     dispatcher: Dispatcher,
-    config: Config,
-    bot: Bot,
-    db: SQLiteDatabase,
 ) -> None:
-    """
-    Shutdown event handler. This runs when the bot shuts down.
+    logger.info("connecting to sqlite: %s", config.sqlite.PATH)
+    await db.connect()
 
-    :param apscheduler: AsyncIOScheduler: The apscheduler instance.
-    :param dispatcher: Dispatcher: The bot dispatcher.
-    :param config: Config: The config instance.
-    :param bot: Bot: The bot instance.
-    """
-    # Stop apscheduler
+    await migrate_from_redis_if_needed(config=config, db=db)
+
+    logger.info("running migrations...")
+    t = time.perf_counter()
+    await run_migrations(config=config, bot=bot, db=db)
+    logger.info("migrations done in %.2fs", time.perf_counter() - t)
+
+    apscheduler.start()
+    await commands.setup(bot, config)
+
+    # In RU prod telegram can't reach the server inbound (block is symmetric),
+    # so webhook delivery times out -> run polling and pull updates outbound
+    # through the proxy instead.
+    if os.environ.get("BOT_MODE", "webhook").lower() == "polling":
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("polling mode: webhook deleted, using getUpdates")
+    else:
+        webhook_url = f"{config.bot.WEBHOOK_URL}/webhook"
+        await bot.set_webhook(
+            url=webhook_url,
+            secret_token=config.bot.WEBHOOK_SECRET,
+            allowed_updates=dispatcher.resolve_used_update_types(),
+            drop_pending_updates=True,
+        )
+        logger.info("webhook registered: %s", webhook_url)
+
+
+async def on_shutdown(
+    bot: Bot,
+    config,
+    db: SQLiteDatabase,
+    apscheduler: AsyncIOScheduler,
+    dispatcher: Dispatcher,
+) -> None:
     apscheduler.shutdown()
-    # Delete commands and close storage when shutting down
     await commands.delete(bot, config)
     await dispatcher.storage.close()
     await db.close()
@@ -45,69 +79,48 @@ async def on_shutdown(
     await bot.session.close()
 
 
-async def on_startup(
-    apscheduler: AsyncIOScheduler,
-    config: Config,
-    bot: Bot,
-) -> None:
-    """
-    Startup event handler. This runs when the bot starts up.
-
-    :param apscheduler: AsyncIOScheduler: The apscheduler instance.
-    :param config: Config: The config instance.
-    :param bot: Bot: The bot instance.
-    """
-    # Start apscheduler
-    apscheduler.start()
-    # Setup commands when starting up
-    await commands.setup(bot, config)
+async def health_handler(_: web.Request) -> web.Response:
+    return web.json_response({"status": "ok"})
 
 
-async def main() -> None:
-    """
-    Main function that initializes the bot and starts the event loop.
-    """
-    logger = logging.getLogger("support_bot.startup")
+async def _run_polling(bot: Bot, dp: Dispatcher, port: int) -> None:
+    # health endpoint for the docker healthcheck runs alongside polling
+    app = web.Application()
+    app.router.add_get("/health", health_handler)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=port)
+    await site.start()
+    logger.info("listening on 0.0.0.0:%d (polling mode)", port)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await runner.cleanup()
 
-    # Load config
+
+def main() -> None:
+    setup_logger()
     config = load_config()
 
-    logger.info("🚀 Запуск support-bot…")
-    logger.info("SQLite: %s", config.sqlite.PATH)
-    logger.info("👤 DEV_ID: %s", config.bot.DEV_ID)
-    logger.info("🗣️  Язык по умолчанию: %s", config.bot.DEFAULT_LANGUAGE)
-    logger.info(
-        "🧭 Подсказка выбора языка: %s",
-        "включена" if config.bot.LANGUAGE_PROMPT_ENABLED else "выключена",
-    )
-    logger.info(
-        "⏰ Напоминания операторам: %s",
-        "активны" if config.bot.REMINDERS_ENABLED else "отключены",
-    )
+    logger.info("starting support-bot (webhook)")
+    logger.info("dev_id: %s, group_id: %s", config.bot.DEV_ID, config.bot.GROUP_ID)
 
-    # Initialize SQLite database
     base_dir = Path(__file__).resolve().parent.parent
     db_path = Path(config.sqlite.PATH)
     if not db_path.is_absolute():
         db_path = (base_dir / db_path).resolve()
+
     db = SQLiteDatabase(path=db_path)
-    await db.connect()
 
-    # Initialize apscheduler
     job_store = SQLAlchemyJobStore(url=f"sqlite:///{db_path.as_posix()}")
-    apscheduler = AsyncIOScheduler(
-        jobstores={"default": job_store},
-    )
+    apscheduler = AsyncIOScheduler(jobstores={"default": job_store})
 
-    # Initialize FSM storage
     storage = SQLiteFSMStorage(db)
 
-    # Create Bot and Dispatcher instances
     bot = Bot(
         token=config.bot.TOKEN,
-        default=DefaultBotProperties(
-            parse_mode=ParseMode.HTML,
-        ),
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        session=make_bot_session(),
     )
     dp = Dispatcher(
         apscheduler=apscheduler,
@@ -117,42 +130,32 @@ async def main() -> None:
         db=db,
     )
 
-    # Register startup handler
     dp.startup.register(on_startup)
-    # Register shutdown handler
     dp.shutdown.register(on_shutdown)
 
-    # Include routes
-    logger.info("🧭 Подключаем роутеры…")
     include_routers(dp)
-    logger.info("✅ Роутеры подключены")
-    # Register middlewares
-    logger.info("🧱 Регистрируем middleware…")
-    register_middlewares(
-        dp, config=config, db=db, apscheduler=apscheduler
+    register_middlewares(dp, config=config, db=db, apscheduler=apscheduler)
+
+    port = int(os.environ.get("PORT", 8080))
+
+    if os.environ.get("BOT_MODE", "webhook").lower() == "polling":
+        asyncio.run(_run_polling(bot, dp, port))
+        return
+
+    app = web.Application()
+    app.router.add_get("/health", health_handler)
+
+    webhook_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+        secret_token=config.bot.WEBHOOK_SECRET,
     )
-    logger.info("✅ Middleware зарегистрированы")
+    webhook_handler.register(app, path="/webhook")
+    setup_application(app, dp, bot=bot)
 
-    # Migrate existing data from Redis if needed
-    await migrate_from_redis_if_needed(config=config, db=db)
-
-    # Apply pending migrations before starting polling
-    logger.info("🧹 Запускаем миграции…")
-    migration_started = time.perf_counter()
-    await run_migrations(config=config, bot=bot, db=db)
-    logger.info(
-        "✅ Миграции завершены за %.2f с",
-        time.perf_counter() - migration_started,
-    )
-
-    # Start the bot
-    await bot.delete_webhook()
-    logger.info("🤖 Бот готов к приёму обновлений")
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    logger.info("listening on 0.0.0.0:%d", port)
+    web.run_app(app, host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
-    # Set up logging
-    setup_logger()
-    # Run the bot
-    asyncio.run(main())
+    main()

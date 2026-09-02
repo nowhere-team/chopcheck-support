@@ -17,7 +17,9 @@ router.callback_query.filter(
 
 
 @router.callback_query()
-async def handler(call: CallbackQuery, manager: Manager, redis: RedisStorage, user_data: UserData) -> None:
+async def handler(
+    call: CallbackQuery, manager: Manager, redis: RedisStorage, user_data: UserData
+) -> None:
     """
     Handles callback queries for selecting the language.
 

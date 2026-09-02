@@ -61,9 +61,7 @@ def _build_menu_text(overrides: dict[str, str]) -> str:
         default_text = TextMessage(language).get("main_menu")
         preview_source = overrides.get(language, default_text)
         status = "кастом" if language in overrides else "по умолчанию"
-        lines.append(
-            f"{hbold(title)} — {_preview_text(preview_source)} ({status})"
-        )
+        lines.append(f"{hbold(title)} — {_preview_text(preview_source)} ({status})")
 
     lines.append("\n<i>Доступен плейсхолдер {full_name} для имени пользователя.</i>")
     return "\n".join(lines)
@@ -99,19 +97,25 @@ async def _send_menu(manager: Manager, settings: SettingsStorage) -> None:
 
 
 @router.message(Command("greeting"))
-async def show_menu(message: Message, manager: Manager, settings: SettingsStorage) -> None:
+async def show_menu(
+    message: Message, manager: Manager, settings: SettingsStorage
+) -> None:
     await _send_menu(manager, settings)
     await manager.delete_message(message)
 
 
 @router.callback_query(F.data == "admin:greeting")
-async def open_from_menu(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def open_from_menu(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     await _send_menu(manager, settings)
     await call.answer()
 
 
 @router.callback_query(F.data.startswith("greet:set:"))
-async def start_edit(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def start_edit(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     language = call.data.split(":", maxsplit=2)[-1]
     if language not in SUPPORTED_LANGUAGES:
         await call.answer("Неизвестный язык.", show_alert=True)
@@ -133,13 +137,17 @@ async def start_edit(call: CallbackQuery, manager: Manager, settings: SettingsSt
 
 
 @router.callback_query(F.data == "greet:back")
-async def back_to_menu(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def back_to_menu(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     await _send_menu(manager, settings)
     await call.answer()
 
 
 @router.callback_query(F.data.startswith("greet:reset:"))
-async def reset_greeting(call: CallbackQuery, manager: Manager, settings: SettingsStorage) -> None:
+async def reset_greeting(
+    call: CallbackQuery, manager: Manager, settings: SettingsStorage
+) -> None:
     language = call.data.split(":", maxsplit=2)[-1]
     if language not in SUPPORTED_LANGUAGES:
         await call.answer("Неизвестный язык.", show_alert=True)
@@ -161,7 +169,9 @@ async def close_menu(call: CallbackQuery, manager: Manager) -> None:
 
 
 @router.message(StateFilter(GreetingStates.waiting_for_text))
-async def save_greeting(message: Message, manager: Manager, settings: SettingsStorage) -> None:
+async def save_greeting(
+    message: Message, manager: Manager, settings: SettingsStorage
+) -> None:
     state_data = await manager.state.get_data()
     language = state_data.get("greeting_language")
     content = (message.text or message.caption or "").strip()

@@ -32,13 +32,13 @@ from app.bot.utils.security import (
 TOPIC_ICON_RESTORE_DELAY = 3.0
 
 GRATITUDE_PHRASES = {
-    'спасибо',
-    'спасибо большое',
-    'спасибо за помощь',
-    'благодарю',
-    'thank you',
-    'thanks',
-    'thx',
+    "спасибо",
+    "спасибо большое",
+    "спасибо за помощь",
+    "благодарю",
+    "thank you",
+    "thanks",
+    "thx",
 }
 
 
@@ -67,13 +67,13 @@ async def handle_edited_message(message: Message, manager: Manager) -> None:
 @router.message(F.media_group_id)
 @router.message(F.media_group_id.is_(None))
 async def handle_incoming_message(
-        message: Message,
-        manager: Manager,
-        redis: RedisStorage,
-        user_data: UserData,
-        apscheduler: AsyncIOScheduler,
-        faq: FAQStorage,
-        album: Album | None = None,
+    message: Message,
+    manager: Manager,
+    redis: RedisStorage,
+    user_data: UserData,
+    apscheduler: AsyncIOScheduler,
+    faq: FAQStorage,
+    album: Album | None = None,
 ) -> None:
     """
     Handles incoming messages and copies them to the forum topic.
@@ -128,7 +128,9 @@ async def handle_incoming_message(
 
         thread_id = user_data.message_thread_id
         group_kwargs = {"message_thread_id": thread_id} if thread_id is not None else {}
-        safe_name = sanitize_display_name(user_data.full_name, placeholder=f"User {user_data.id}")
+        safe_name = sanitize_display_name(
+            user_data.full_name, placeholder=f"User {user_data.id}"
+        )
         await message.bot.send_message(
             chat_id=manager.config.bot.GROUP_ID,
             text=manager.text_message.get("auto_blocked_alert").format(
@@ -208,8 +210,7 @@ async def handle_incoming_message(
         user_data.panel_message_id = panel_message.message_id
 
     should_send_confirmation = (
-        user_data.last_user_message_at is None
-        or ticket_was_resolved
+        user_data.last_user_message_at is None or ticket_was_resolved
     )
 
     if should_send_confirmation:
@@ -229,7 +230,7 @@ async def handle_incoming_message(
                 disable_web_page_preview=True,
             )
 
-    normalized = re.sub(r'[\W_]+', ' ', text_content.lower()).strip()
+    normalized = re.sub(r"[\W_]+", " ", text_content.lower()).strip()
     if user_data.ticket_status == "resolved" and normalized in GRATITUDE_PHRASES:
         user_data.awaiting_reply = False
         await redis.update_user(user_data.id, user_data)
@@ -267,4 +268,3 @@ async def handle_incoming_message(
             language_code=user_data.language_code,
             db_path=manager.config.sqlite.PATH,
         )
-

@@ -1,13 +1,14 @@
 FROM python:3.12-slim
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 COPY requirements.txt .
-
-RUN pip install --no-cache-dir --upgrade pip &&  \
+RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY app/ ./app/
+
+CMD ["python", "-m", "app"]

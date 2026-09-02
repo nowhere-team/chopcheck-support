@@ -32,7 +32,7 @@ async def not_enough_rights_error(event: ErrorEvent, manager: Manager) -> None:
     :param manager: Manager object.
     :return: None
     """
-    logging.exception(f'Update: {event.update}\nException: {event.exception}')
+    logging.exception(f"Update: {event.update}\nException: {event.exception}")
     print(event.exception.args)
     await manager.bot.send_message(
         manager.config.bot.DEV_ID,
@@ -49,7 +49,7 @@ async def create_forum_topic_error(event: ErrorEvent, manager: Manager) -> None:
     :param manager: Manager object.
     :return: None
     """
-    logging.exception(f'Update: {event.update}\nException: {event.exception}')
+    logging.exception(f"Update: {event.update}\nException: {event.exception}")
 
     await manager.bot.send_message(
         manager.config.bot.DEV_ID,
@@ -66,7 +66,7 @@ async def telegram_api_error(event: ErrorEvent, manager: Manager) -> None:
     :param manager: Manager object.
     :return: None
     """
-    logging.exception(f'Update: {event.update}\nException: {event.exception}')
+    logging.exception(f"Update: {event.update}\nException: {event.exception}")
 
     # Prepare data for document
     update_json = event.update.model_dump_json(indent=2, exclude_none=True)
@@ -74,13 +74,15 @@ async def telegram_api_error(event: ErrorEvent, manager: Manager) -> None:
 
     # Send document with error details
     document_data = traceback.format_exc().encode()
-    document_name = f'error_{event.update.update_id}.txt'
+    document_name = f"error_{event.update.update_id}.txt"
 
     document = BufferedInputFile(document_data, filename=document_name)
-    caption = f'{hbold(exc_name)}:\n{hcode(exc_text[:1024 - len(exc_name) - 2])}'
-    message = await manager.bot.send_document(manager.config.bot.DEV_ID, document, caption=caption)
+    caption = f"{hbold(exc_name)}:\n{hcode(exc_text[: 1024 - len(exc_name) - 2])}"
+    message = await manager.bot.send_document(
+        manager.config.bot.DEV_ID, document, caption=caption
+    )
 
     # Send update_json in chunks
-    for text in [update_json[i:i + 4096] for i in range(0, len(update_json), 4096)]:
-        await asyncio.sleep(.1)
+    for text in [update_json[i : i + 4096] for i in range(0, len(update_json), 4096)]:
+        await asyncio.sleep(0.1)
         await message.reply(hcode(text))

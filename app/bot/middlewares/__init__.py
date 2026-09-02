@@ -19,7 +19,9 @@ def register_middlewares(dp: Dispatcher, **kwargs) -> None:
         None
     """
     # Register RedisMiddleware with the provided SQLite instance
-    dp.update.outer_middleware.register(RedisMiddleware(kwargs["db"], config=kwargs["config"]))
+    dp.update.outer_middleware.register(
+        RedisMiddleware(kwargs["db"], config=kwargs["config"])
+    )
     # Register ManagerMiddleware
     dp.update.outer_middleware.register(ManagerMiddleware())
 
