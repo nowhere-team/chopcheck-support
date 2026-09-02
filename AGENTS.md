@@ -39,7 +39,7 @@ gh pr create --repo nowhere-team/chopcheck-support --base main
 
 **`docs/DEVELOPMENT.md` устарел** — там всё ещё написано, что Redis это основное хранилище состояния. Верь коду и этому файлу.
 
-Из этого следует важное для эксплуатации: **данные бота живут в томе `support-bot-data`, а не в общем Postgres**, и общий скрипт бэкапа из `infrastructure` их не забирает.
+Данные бота живут в томе `support-bot-data`, а не в общем Postgres. В бэкап они попадают: `shared/scripts/backup.sh` в `infrastructure` отдельной строкой вытаскивает файл базы из контейнера через `docker cp chopcheck-support-bot:/data/support-bot.sqlite3`. Переименуешь контейнер или переедешь с этого пути — молча сломаешь бэкап, скрипт про SQLite знает жёстко зашитыми значениями.
 
 ## В проде он работает на polling, а не на вебхуках
 
